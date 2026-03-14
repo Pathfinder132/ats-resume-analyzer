@@ -212,7 +212,10 @@ ORIGINAL RESUME:
 ${resumeText}
 """`;
 
-    const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
+    const result = await Promise.race([
+      model.generateContent(systemPrompt + "\n\n" + userPrompt),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini timeout")), 20000)),
+    ]);
 
     return parseAIResponse(result.response.text());
   } catch (error) {

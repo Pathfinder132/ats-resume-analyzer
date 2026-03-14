@@ -6,7 +6,7 @@ const { extractTextFromFile } = require("../services/parseService");
 const { calculateATSScore } = require("../services/atsService");
 const { getFullAIAnalysis, optimizeResume } = require("../services/aiService");
 const { generatePDF } = require("../services/pdfService");
-
+  
 // POST /api/resume/upload
 const uploadResume = async (req, res) => {
   try {
