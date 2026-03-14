@@ -4,9 +4,9 @@ const fs = require("fs");
 const Resume = require("../models/Resume");
 const { extractTextFromFile } = require("../services/parseService");
 const { calculateATSScore } = require("../services/atsService");
-const { getFullAIAnalysis, optimizeResume } = require("../services/aiService");
+const { analyzeAndOptimizeResume } = require("../services/aiService");
 const { generatePDF } = require("../services/pdfService");
-  
+
 // POST /api/resume/upload
 const uploadResume = async (req, res) => {
   try {
@@ -36,8 +36,18 @@ const uploadResume = async (req, res) => {
 // POST /api/resume/analyze
 const analyzeResume = async (req, res) => {
   try {
-    const { resumeId } = req.body;
     const resume = await Resume.findOne({ resumeId });
+    if (!resume) return res.status(404).json({ success: false, message: "Resume not found" });
+
+    // 🔹 Skip Gemini if already analyzed
+    if (resume.optimizedResumeJson && resume.fullAnalysis) {
+      return res.json({
+        success: true,
+        resumeId,
+        atsScore: resume.atsScore,
+        fullAnalysis: resume.fullAnalysis,
+      });
+    }
     if (!resume) return res.status(404).json({ success: false, message: "Resume not found" });
 
     // 1. Text Extraction
@@ -82,7 +92,7 @@ const optimizeResumeHandler = async (req, res) => {
     if (!resume) return res.status(404).json({ success: false, message: "Resume not found" });
 
     // AI Optimization
-    const optimizedJson = await optimizeResume(resume.originalText);
+    const optimizedJson = resume.optimizedResumeJson;
     resume.optimizedResumeJson = optimizedJson;
 
     // PDF Generation
