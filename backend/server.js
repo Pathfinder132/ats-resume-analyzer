@@ -6,6 +6,10 @@ const connectDB = require("./src/config/database");
 
 const app = express();
 
+const fs = require("fs");
+
+fs.mkdirSync("uploads", { recursive: true });
+fs.mkdirSync("uploads/pdfs", { recursive: true });
 // Connect to DB
 connectDB();
 

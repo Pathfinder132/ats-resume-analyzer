@@ -7,5 +7,8 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "build:frontend": "cd frontend && npm run build"
+  },
+  "dependencies": {
+    "mongodb": "^7.1.0"
   }
 }
