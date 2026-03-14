@@ -4,8 +4,12 @@ const cors = require("cors");
 const path = require("path");
 const connectDB = require("./src/config/database");
 
-const cors = require("cors");
+const app = express();
 
+// Connect to DB
+connectDB();
+
+// CORS
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://phenomenal-seahorse-76db32.netlify.app"],
@@ -14,22 +18,7 @@ app.use(
   }),
 );
 
-const resumeRoutes = require("./src/routes/resumeRoutes");
-const paymentRoutes = require("./src/routes/payment");
-const authRoutes = require("./src/routes/auth");
-
-const app = express();
-
-// Connect to DB
-connectDB();
-
 // Middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  }),
-);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -37,6 +26,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+const resumeRoutes = require("./src/routes/resumeRoutes");
+const paymentRoutes = require("./src/routes/payment");
+const authRoutes = require("./src/routes/auth");
+
 app.use("/api/auth", authRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/payment", paymentRoutes);
