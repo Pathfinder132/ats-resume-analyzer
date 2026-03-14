@@ -1,55 +1,67 @@
-const puppeteer = require('puppeteer');
-const path = require('path');
-const fs = require('fs');
+const puppeteer = require("puppeteer");
+const path = require("path");
+const fs = require("fs");
 
 function buildResumeHTML(data) {
   const skillsHTML = `
-    ${data.skills?.technical?.length ? `<div class="skill-group"><span class="skill-label">Technical:</span> ${data.skills.technical.join(' • ')}</div>` : ''}
-    ${data.skills?.tools?.length ? `<div class="skill-group"><span class="skill-label">Tools:</span> ${data.skills.tools.join(' • ')}</div>` : ''}
-    ${data.skills?.soft?.length ? `<div class="skill-group"><span class="skill-label">Soft Skills:</span> ${data.skills.soft.join(' • ')}</div>` : ''}
+    ${data.skills?.technical?.length ? `<div class="skill-group"><span class="skill-label">Technical:</span> ${data.skills.technical.join(" • ")}</div>` : ""}
+    ${data.skills?.tools?.length ? `<div class="skill-group"><span class="skill-label">Tools:</span> ${data.skills.tools.join(" • ")}</div>` : ""}
+    ${data.skills?.soft?.length ? `<div class="skill-group"><span class="skill-label">Soft Skills:</span> ${data.skills.soft.join(" • ")}</div>` : ""}
   `;
 
-  const educationHTML = (data.education || []).map(edu => `
+  const educationHTML = (data.education || [])
+    .map(
+      (edu) => `
     <div class="entry">
       <div class="entry-header">
         <div>
-          <div class="entry-title">${edu.degree || ''}</div>
-          <div class="entry-subtitle">${edu.institution || ''}</div>
+          <div class="entry-title">${edu.degree || ""}</div>
+          <div class="entry-subtitle">${edu.institution || ""}</div>
         </div>
-        <div class="entry-date">${edu.year || ''}</div>
+        <div class="entry-date">${edu.year || ""}</div>
       </div>
-      ${edu.gpa ? `<div class="entry-meta">GPA: ${edu.gpa}</div>` : ''}
-      ${(edu.achievements || []).map(a => `<div class="bullet">• ${a}</div>`).join('')}
+      ${edu.gpa ? `<div class="entry-meta">GPA: ${edu.gpa}</div>` : ""}
+      ${(edu.achievements || []).map((a) => `<div class="bullet">• ${a}</div>`).join("")}
     </div>
-  `).join('');
+  `,
+    )
+    .join("");
 
-  const experienceHTML = (data.experience || []).map(exp => `
+  const experienceHTML = (data.experience || [])
+    .map(
+      (exp) => `
     <div class="entry">
       <div class="entry-header">
         <div>
-          <div class="entry-title">${exp.role || ''}</div>
-          <div class="entry-subtitle">${exp.company || ''}${exp.location ? ' — ' + exp.location : ''}</div>
+          <div class="entry-title">${exp.role || ""}</div>
+          <div class="entry-subtitle">${exp.company || ""}${exp.location ? " — " + exp.location : ""}</div>
         </div>
-        <div class="entry-date">${exp.duration || ''}</div>
+        <div class="entry-date">${exp.duration || ""}</div>
       </div>
-      ${(exp.bullets || []).map(b => `<div class="bullet">• ${b}</div>`).join('')}
+      ${(exp.bullets || []).map((b) => `<div class="bullet">• ${b}</div>`).join("")}
     </div>
-  `).join('');
+  `,
+    )
+    .join("");
 
-  const projectsHTML = (data.projects || []).map(proj => `
+  const projectsHTML = (data.projects || [])
+    .map(
+      (proj) => `
     <div class="entry">
       <div class="entry-header">
         <div>
-          <div class="entry-title">${proj.title || ''}</div>
-          ${proj.tech?.length ? `<div class="entry-subtitle">${proj.tech.join(' • ')}</div>` : ''}
+          <div class="entry-title">${proj.title || ""}</div>
+          ${proj.tech?.length ? `<div class="entry-subtitle">${proj.tech.join(" • ")}</div>` : ""}
         </div>
       </div>
-      ${(proj.bullets || []).map(b => `<div class="bullet">• ${b}</div>`).join('')}
+      ${(proj.bullets || []).map((b) => `<div class="bullet">• ${b}</div>`).join("")}
     </div>
-  `).join('');
+  `,
+    )
+    .join("");
 
-  const certsHTML = (data.certifications || []).map(c => `<div class="bullet">• ${c}</div>`).join('');
-  const achievementsHTML = (data.achievements || []).map(a => `<div class="bullet">• ${a}</div>`).join('');
+  const certsHTML = (data.certifications || []).map((c) => `<div class="bullet">• ${c}</div>`).join("");
+  const achievementsHTML = (data.achievements || []).map((a) => `<div class="bullet">• ${a}</div>`).join("");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -86,56 +98,84 @@ function buildResumeHTML(data) {
 <body>
 
 <div class="header">
-  <div class="name">${data.name || 'Name'}</div>
+  <div class="name">${data.name || "Name"}</div>
   <div class="contact">
-    ${data.email ? `<span>${data.email}</span>` : ''}
-    ${data.phone ? `<span>${data.phone}</span>` : ''}
-    ${data.linkedin ? `<span>${data.linkedin}</span>` : ''}
-    ${data.github ? `<span>${data.github}</span>` : ''}
+    ${data.email ? `<span>${data.email}</span>` : ""}
+    ${data.phone ? `<span>${data.phone}</span>` : ""}
+    ${data.linkedin ? `<span>${data.linkedin}</span>` : ""}
+    ${data.github ? `<span>${data.github}</span>` : ""}
   </div>
 </div>
 
-${data.summary ? `
+${
+  data.summary
+    ? `
 <div class="section">
   <div class="section-title">Professional Summary</div>
   <div class="summary-text">${data.summary}</div>
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.skills && (data.skills.technical?.length || data.skills.tools?.length) ? `
+${
+  data.skills && (data.skills.technical?.length || data.skills.tools?.length)
+    ? `
 <div class="section">
   <div class="section-title">Skills</div>
   ${skillsHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.experience?.length ? `
+${
+  data.experience?.length
+    ? `
 <div class="section">
   <div class="section-title">Experience</div>
   ${experienceHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.projects?.length ? `
+${
+  data.projects?.length
+    ? `
 <div class="section">
   <div class="section-title">Projects</div>
   ${projectsHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.education?.length ? `
+${
+  data.education?.length
+    ? `
 <div class="section">
   <div class="section-title">Education</div>
   ${educationHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.certifications?.length ? `
+${
+  data.certifications?.length
+    ? `
 <div class="section">
   <div class="section-title">Certifications</div>
   ${certsHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
-${data.achievements?.length ? `
+${
+  data.achievements?.length
+    ? `
 <div class="section">
   <div class="section-title">Achievements</div>
   ${achievementsHTML}
-</div>` : ''}
+</div>`
+    : ""
+}
 
 </body>
 </html>`;
@@ -145,18 +185,19 @@ async function generatePDF(resumeData, outputPath) {
   const html = buildResumeHTML(resumeData);
 
   const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    executablePath: "/opt/render/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: "new",
   });
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: "networkidle0" });
     await page.pdf({
       path: outputPath,
-      format: 'A4',
+      format: "A4",
       printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' }
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
     });
   } finally {
     await browser.close();
