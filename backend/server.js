@@ -4,6 +4,16 @@ const cors = require("cors");
 const path = require("path");
 const connectDB = require("./src/config/database");
 
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://phenomenal-seahorse-76db32.netlify.app"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
+
 const resumeRoutes = require("./src/routes/resumeRoutes");
 const paymentRoutes = require("./src/routes/payment");
 const authRoutes = require("./src/routes/auth");
