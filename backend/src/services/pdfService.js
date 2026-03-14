@@ -181,29 +181,222 @@ ${
 </html>`;
 }
 
-async function generatePDF(resumeData, outputPath) {
-  const html = buildResumeHTML(resumeData);
+// backend/src/services/pdfService.js
+const fs = require("fs");
+const path = require("path");
+const PDFDocument = require("pdfkit");
 
-  const browser = await puppeteer.launch({
-    executablePath: "/opt/render/.cache/puppeteer/chrome/linux-127.0.6533.88/chrome-linux64/chrome",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: "new",
+// helper to draw bullets with wrapping
+function drawBullets(doc, bullets, x, y, maxWidth, lineHeight) {
+  let cursorY = y;
+  bullets.forEach((b) => {
+    doc
+      .circle(x + 5, cursorY + 6, 2)
+      .fillColor("#000")
+      .fill();
+    doc.fillColor("#000").fontSize(10);
+    const bOptions = { width: maxWidth - 20, align: "left" };
+    doc.text(b, x + 14, cursorY, bOptions);
+    cursorY = doc.y + lineHeight;
   });
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.pdf({
-      path: outputPath,
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
-    });
-  } finally {
-    await browser.close();
-  }
-
-  return outputPath;
+  return cursorY;
 }
+
+function normalizeDate(d) {
+  if (!d) return "";
+  // if already normalized (Mon YYYY) return
+  return d;
+}
+
+/**
+ * generatePDF - write resume JSON to a PDF file
+ * @param {Object} resume - optimized resume JSON (see your schema)
+ * @param {string} outputPath - full path to write pdf
+ * @returns Promise<void>
+ */
+function generatePDF(resume, outputPath) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "A4",
+        margin: 48,
+      });
+
+      // ensure parent dir exists
+      const dir = path.dirname(outputPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+      const stream = fs.createWriteStream(outputPath);
+      doc.pipe(stream);
+
+      // fonts and styles (use built-in fonts; embed custom .ttf if you want)
+      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      let x = doc.page.margins.left;
+      let y = doc.page.margins.top;
+
+      // Header
+      doc
+        .fontSize(20)
+        .font("Helvetica-Bold")
+        .fillColor("#000")
+        .text(resume.name || "", x, y);
+      doc.moveDown(0.2);
+      doc.fontSize(10).font("Helvetica").fillColor("#555");
+      const contact = [resume.email || "", resume.phone || "", resume.linkedin || "", resume.github || ""].filter(Boolean).join("  •  ");
+      doc.text(contact, { width: pageWidth, align: "left" });
+
+      doc.moveDown(0.6);
+      doc
+        .strokeColor("#e6e6e6")
+        .lineWidth(1)
+        .moveTo(x, doc.y)
+        .lineTo(x + pageWidth, doc.y)
+        .stroke();
+      doc.moveDown(0.8);
+
+      // Summary
+      if (resume.summary) {
+        doc.fontSize(11).font("Helvetica").fillColor("#000").text(resume.summary, { width: pageWidth, align: "left" });
+        doc.moveDown(0.8);
+      }
+
+      // Two-column layout for skills (left) and experience (right)
+      const colGap = 18;
+      const leftColWidth = Math.round(pageWidth * 0.32);
+      const rightColWidth = pageWidth - leftColWidth - colGap;
+
+      // LEFT column: Skills, Education, Certifications, Achievements
+      let leftY = doc.y;
+      const leftX = x;
+
+      // Skills
+      if (resume.skills) {
+        doc.fontSize(12).font("Helvetica-Bold").fillColor("#000").text("Skills", leftX, leftY);
+        leftY = doc.y + 6;
+        const skillLines = [];
+        if (resume.skills.technical?.length) skillLines.push("Technical: " + resume.skills.technical.join(", "));
+        if (resume.skills.tools?.length) skillLines.push("Tools: " + resume.skills.tools.join(", "));
+        if (resume.skills.soft?.length) skillLines.push("Soft: " + resume.skills.soft.join(", "));
+        skillLines.forEach((line) => {
+          doc.fontSize(10).font("Helvetica").fillColor("#333").text(line, { width: leftColWidth, continued: false });
+          leftY = doc.y + 4;
+          doc.moveDown(0.2);
+        });
+        leftY = doc.y + 6;
+      }
+
+      // Education
+      if (resume.education && Array.isArray(resume.education) && resume.education.length) {
+        doc.fontSize(12).font("Helvetica-Bold").text("Education", leftX, leftY);
+        leftY = doc.y + 6;
+        resume.education.forEach((ed) => {
+          doc
+            .fontSize(10)
+            .font("Helvetica-Bold")
+            .fillColor("#000")
+            .text(`${ed.degree || ""}`, { width: leftColWidth });
+          doc
+            .fontSize(9)
+            .font("Helvetica")
+            .fillColor("#333")
+            .text(`${ed.institution || ""} • ${ed.year || ""}`, { width: leftColWidth });
+          if (ed.achievements && ed.achievements.length) {
+            ed.achievements.forEach((a) => {
+              doc.fontSize(9).text("• " + a, { width: leftColWidth });
+            });
+          }
+          doc.moveDown(0.4);
+        });
+        leftY = doc.y + 6;
+      }
+
+      // Certifications & Achievements (left)
+      if (resume.certifications && resume.certifications.length) {
+        doc.fontSize(12).font("Helvetica-Bold").text("Certifications", leftX, leftY);
+        leftY = doc.y + 6;
+        resume.certifications.forEach((c) => {
+          doc
+            .fontSize(10)
+            .font("Helvetica")
+            .text("• " + c, { width: leftColWidth });
+        });
+        leftY = doc.y + 6;
+      }
+      if (resume.achievements && resume.achievements.length) {
+        doc.fontSize(12).font("Helvetica-Bold").text("Achievements", leftX, leftY);
+        leftY = doc.y + 6;
+        resume.achievements.forEach((a) => {
+          doc.fontSize(10).text("• " + a, { width: leftColWidth });
+        });
+        leftY = doc.y + 6;
+      }
+
+      // Now RIGHT column: Experience and Projects
+      let rightY = doc.page.margins.top + 80; // start below header area
+      const rightX = x + leftColWidth + colGap;
+
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("Experience", rightX, doc.page.margins.top + 60);
+      rightY = doc.y + 6;
+
+      if (resume.experience && Array.isArray(resume.experience)) {
+        resume.experience.forEach((exp) => {
+          // company + role + duration
+          doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .fillColor("#000")
+            .text(`${exp.role || ""}`, rightX, rightY, { width: rightColWidth });
+          // second line company + duration
+          doc
+            .fontSize(10)
+            .font("Helvetica")
+            .fillColor("#333")
+            .text(`${exp.company || ""} • ${normalizeDate(exp.duration) || ""}`, { width: rightColWidth });
+          doc.moveDown(0.3);
+          // bullets
+          const startBulY = doc.y;
+          let afterBulY = drawBullets(doc, exp.bullets || [], rightX, startBulY, rightColWidth, 6);
+          rightY = afterBulY + 6;
+          doc.y = rightY;
+        });
+      }
+
+      // Projects
+      if (resume.projects && Array.isArray(resume.projects) && resume.projects.length) {
+        doc.addPageIfNeeded?.(); // harmless if not present
+        doc.moveDown(0.4);
+        doc.fontSize(12).font("Helvetica-Bold").text("Projects", rightX);
+        resume.projects.forEach((p) => {
+          doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .text(p.title || "", { width: rightColWidth });
+          doc
+            .fontSize(10)
+            .font("Helvetica")
+            .text((p.tech || []).join(", "), { width: rightColWidth });
+          drawBullets(doc, p.bullets || [], rightX, doc.y + 4, rightColWidth, 6);
+          doc.moveDown(0.6);
+        });
+      }
+
+      // footer
+      doc.moveDown(1.0);
+      doc.fontSize(9).fillColor("#999").text(`Generated by ResumeIQ`, { align: "center" });
+
+      doc.end();
+
+      stream.on("finish", () => resolve());
+      stream.on("error", (err) => reject(err));
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+module.exports = { generatePDF };
 
 module.exports = { generatePDF, buildResumeHTML };
