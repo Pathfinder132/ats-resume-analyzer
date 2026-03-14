@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://ats-resume-analyzer-etjn.onrender.com/",
+  baseURL: "https://ats-resume-analyzer-etjn.onrender.com/api",
   timeout: 60000,
 });
 
