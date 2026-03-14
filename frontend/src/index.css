@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-ink-50 text-ink-900 font-body antialiased;
+  }
+  * { @apply border-ink-200; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink-900 text-white font-body font-500 text-sm rounded-lg
+           hover:bg-ink-800 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-sage {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage text-white font-body font-500 text-sm rounded-lg
+           hover:bg-sage-700 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-ink-200 text-ink-800 font-body font-500 text-sm rounded-lg
+           hover:bg-ink-100 active:scale-95 transition-all duration-150;
+  }
+  .card {
+    @apply bg-white border border-ink-100 rounded-2xl shadow-sm;
+  }
+  .section-tag {
+    @apply inline-flex items-center gap-1.5 text-xs font-mono font-500 text-ink-400 uppercase tracking-widest;
+  }
+  .score-ring-text {
+    font-family: 'DM Serif Display', serif;
+  }
+}
+
+@layer utilities {
+  .font-500 { font-weight: 500; }
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+}
+
+/* Dropzone styles */
+.dropzone-active {
+  @apply border-sage bg-sage-50 scale-[1.01];
+}
+
+/* Score gauge animation */
+.score-circle {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0f0ee 25%, #e8e8e5 50%, #f0f0ee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f5f5f4; }
+::-webkit-scrollbar-thumb { background: #d1d0cc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9b9a94; }
