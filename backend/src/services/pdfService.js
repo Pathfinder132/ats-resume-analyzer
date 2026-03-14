@@ -1,4 +1,3 @@
-const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 
@@ -182,8 +181,7 @@ ${
 }
 
 // backend/src/services/pdfService.js
-const fs = require("fs");
-const path = require("path");
+
 const PDFDocument = require("pdfkit");
 
 // helper to draw bullets with wrapping
@@ -396,7 +394,5 @@ function generatePDF(resume, outputPath) {
     }
   });
 }
-
-module.exports = { generatePDF };
 
 module.exports = { generatePDF, buildResumeHTML };
