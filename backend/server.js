@@ -14,13 +14,21 @@ fs.mkdirSync("uploads/pdfs", { recursive: true });
 connectDB();
 
 // CORS
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://phenomenal-seahorse-76db32.netlify.app"],
+    origin: (origin, callback) => callback(null, true), // allow all origins during dev
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
 );
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "https://phenomenal-seahorse-76db32.netlify.app"],
+
+//     credentials: true,
+//   }),
+// );
 
 // Middleware
 app.use(express.json());
