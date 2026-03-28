@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ScoreRing from '../components/ScoreRing'
 import ScoreBreakdown from '../components/ScoreBreakdown'
-import PaymentModal from '../components/PaymentModal'
-import { getResumeStatus, optimizeResume } from '../services/api'
+import JDMatchSection from '../components/JDMatchSection'
+import { getResumeStatus } from '../services/api'
 
 function Tag({ children, color = 'default' }) {
   const colors = {
     default: 'bg-ink-100 text-ink-600',
-    red: 'bg-crimson-50 text-crimson-500',
-    green: 'bg-sage-50 text-sage-500',
-    amber: 'bg-amber-50 text-amber-500',
+    red:     'bg-crimson-50 text-crimson-500',
+    green:   'bg-sage-50 text-sage-500',
+    amber:   'bg-amber-50 text-amber-500',
   }
   return (
     <span className={`inline-block px-2.5 py-0.5 rounded-md text-xs font-mono font-500 ${colors[color]}`}>
@@ -32,12 +32,10 @@ function LockBadge() {
 
 export default function ResultsPage() {
   const { resumeId } = useParams()
-  const navigate = useNavigate()
-  const [data, setData] = useState(null)
+  const navigate     = useNavigate()
+  const [data, setData]     = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [showPayment, setShowPayment] = useState(false)
-  const [optimizing, setOptimizing] = useState(false)
+  const [error, setError]   = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -52,18 +50,6 @@ export default function ResultsPage() {
     }
     load()
   }, [resumeId])
-
-  const handlePaymentSuccess = async () => {
-    setShowPayment(false)
-    setOptimizing(true)
-    try {
-      await optimizeResume(resumeId)
-      navigate(`/optimized/${resumeId}`)
-    } catch (e) {
-      setError('Optimization failed: ' + (e.message || 'Unknown error'))
-      setOptimizing(false)
-    }
-  }
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-6 py-20 text-center">
@@ -82,54 +68,80 @@ export default function ResultsPage() {
     </div>
   )
 
-  const { atsScore, scoreBreakdown, freeAnalysis, isPaid } = data
+  const { atsScore, scoreBreakdown, freeAnalysis } = data
+
+  // ── Unreadable / non-resume file ─────────────────────────────────────────
+  if (atsScore === 0) {
+    const messages = freeAnalysis?.formattingIssues || []
+    const isImagePdf = messages[0]?.toLowerCase().includes('scanned') ||
+                       messages[0]?.toLowerCase().includes('image')
+    return (
+      <div className="max-w-xl mx-auto px-6 py-24 text-center">
+        <div className="card p-10">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto mb-6">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="11" x2="12" y2="16"/>
+              <line x1="12" y1="19" x2="12.01" y2="19"/>
+            </svg>
+          </div>
+          <h2 className="font-display text-2xl text-ink-900 mb-3">
+            {isImagePdf ? 'Could not read this PDF' : 'File not recognised'}
+          </h2>
+          <div className="space-y-2 mb-8 text-left bg-amber-50 border border-amber-100 rounded-xl p-4">
+            {messages.length > 0 ? messages.map((msg, i) => (
+              <p key={i} className={`text-sm ${i === 0 ? 'text-ink-800 font-500' : 'text-ink-600'}`}>
+                {i === 0 ? '⚠️ ' : '→ '}{msg}
+              </p>
+            )) : (
+              <p className="text-sm text-ink-600">→ Please upload a text-based PDF or DOCX resume file.</p>
+            )}
+          </div>
+          {isImagePdf && (
+            <div className="mb-6 p-4 bg-ink-50 border border-ink-100 rounded-xl text-left">
+              <p className="text-xs font-500 text-ink-700 mb-2">How to get a readable PDF:</p>
+              <ol className="text-xs text-ink-500 space-y-1 list-decimal list-inside">
+                <li>Open your resume in Google Docs, Word, or Overleaf</li>
+                <li>Go to File → Download → PDF Document</li>
+                <li>Upload that PDF — it will have selectable text</li>
+              </ol>
+            </div>
+          )}
+          <button onClick={() => navigate('/analyze')} className="btn-primary w-full justify-center">
+            Upload a Different File
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const isHighScore = atsScore >= 85
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      {optimizing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 backdrop-blur-sm">
-          <div className="card p-10 text-center max-w-sm w-full">
-            <svg className="animate-spin w-10 h-10 text-sage-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <h3 className="font-display text-2xl text-ink-900 mb-2">Optimizing your resume</h3>
-            <p className="text-ink-500 text-sm">AI is rewriting your bullets, adding keywords, and generating your PDF. This takes up to 30 seconds.</p>
-          </div>
-        </div>
-      )}
-
-      {showPayment && (
-        <PaymentModal resumeId={resumeId} onSuccess={handlePaymentSuccess} onClose={() => setShowPayment(false)} />
-      )}
-
       {/* Header */}
       <div className="text-center mb-10 animate-fade-up">
         <div className="section-tag mb-4 justify-center">ATS ANALYSIS COMPLETE</div>
         <h1 className="font-display text-4xl text-ink-900 mb-2">Your Resume Score</h1>
         <p className="text-ink-500">
           {isHighScore
-            ? 'Your resume is already strong. See the breakdown below.'
-            : 'Here\'s what\'s holding your resume back from ATS systems.'}
+            ? 'Your resume is already strong. See what to improve below.'
+            : "Here's what's holding your resume back from ATS systems."}
         </p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Score column */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Score Ring */}
           <div className="card p-8 text-center animate-fade-up animate-delay-100">
             <ScoreRing score={atsScore} />
-
             {isHighScore && (
               <div className="mt-4 p-3 bg-sage-50 border border-sage-100 rounded-xl text-sm text-sage-500">
                 Your resume is already highly optimized for ATS systems.
               </div>
             )}
           </div>
-
-          {/* Score Breakdown */}
           <div className="card p-6 animate-fade-up animate-delay-200">
             <h3 className="font-body font-500 text-ink-900 mb-5">Score Breakdown</h3>
             <ScoreBreakdown breakdown={scoreBreakdown} />
@@ -160,7 +172,9 @@ export default function ResultsPage() {
             )}
             <div className="mt-3 flex items-center gap-1.5">
               <LockBadge />
-              <span className="text-xs text-ink-400">+{Math.max(0, 25 - (freeAnalysis?.missingKeywords?.length || 0))} more in full analysis</span>
+              <span className="text-xs text-ink-400">
+                +{Math.max(0, 25 - (freeAnalysis?.missingKeywords?.length || 0))} more in full analysis
+              </span>
             </div>
           </div>
 
@@ -198,12 +212,14 @@ export default function ResultsPage() {
                 ))}
               </div>
               {freeAnalysis.weakBullets.length > 2 && (
-                <p className="text-xs text-ink-400 mt-2">+ {freeAnalysis.weakBullets.length - 2} more weak bullets detected</p>
+                <p className="text-xs text-ink-400 mt-2">
+                  + {freeAnalysis.weakBullets.length - 2} more weak bullets detected
+                </p>
               )}
             </div>
           )}
 
-          {/* Sample Improvements (free preview) */}
+          {/* Sample Improvements */}
           <div className="card p-6 animate-fade-up animate-delay-400">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-body font-500 text-ink-900">Sample Bullet Improvements</h3>
@@ -224,52 +240,16 @@ export default function ResultsPage() {
                     <div className="flex-1 h-px bg-ink-100"/>
                   </div>
                   <div className="p-3 bg-sage-50 border border-sage-100 rounded-lg">
-                    <div className="text-xs font-mono text-sage-500 mb-1">AFTER (AI Optimized)</div>
+                    <div className="text-xs font-mono text-sage-500 mb-1">AFTER</div>
                     <p className="text-sm text-ink-800">{imp.after}</p>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Lock overlay for more improvements */}
-            <div className="mt-5 p-4 border-2 border-dashed border-ink-200 rounded-xl text-center bg-ink-50">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9B9A94" strokeWidth="1.5" className="mx-auto mb-2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-              <p className="text-sm font-500 text-ink-700 mb-1">Full optimization locked</p>
-              <p className="text-xs text-ink-400">All bullets rewritten + downloadable PDF</p>
-            </div>
           </div>
 
-          {/* CTA */}
-          <div className={`card p-8 text-center animate-fade-up animate-delay-400 ${isHighScore ? 'bg-sage-50 border-sage-100' : 'bg-ink-900 border-ink-900'}`}>
-            {isHighScore ? (
-              <>
-                <div className="text-3xl mb-3">🎉</div>
-                <h3 className="font-display text-2xl text-sage-500 mb-2">Strong resume!</h3>
-                <p className="text-ink-600 text-sm mb-5">
-                  Your score is excellent. Optional: let AI fine-tune it even further.
-                </p>
-                <button onClick={handlePaymentSuccess} className="btn-outline border-sage-200 text-sage-500 hover:bg-sage-50">
-                  Optional: Full AI Optimization
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="section-tag text-ink-400 mb-3 justify-center">UNLOCK FULL POTENTIAL</div>
-                <h3 className="font-display text-2xl text-white mb-3">
-                  Boost your score to <span className="text-sage-300">85+</span>
-                </h3>
-                <p className="text-ink-400 text-sm mb-6">
-                  AI rewrites every bullet point, adds missing keywords, and generates a polished PDF — for just ₹99.
-                </p>
-                <button onClick={handlePaymentSuccess} className="btn-sage w-full text-base py-4">
-                  Optimize My Resume — ₹99
-                </button>
-                <p className="text-ink-500 text-xs mt-3">One-time · Download your new resume immediately</p>
-              </>
-            )}
-          </div>
+          {/* JD Match — the paid feature */}
+          <JDMatchSection resumeId={resumeId} />
         </div>
       </div>
     </div>

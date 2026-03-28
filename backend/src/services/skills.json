@@ -734,7 +734,17 @@
     },
     "mobile": {
       "weight": 1.0,
-      "skills": ["react native", "flutter", "swift", "kotlin", "android", "ios", "xcode", "android studio", "mobile development"]
+      "skills": [
+        "react native",
+        "flutter",
+        "swift",
+        "kotlin",
+        "android",
+        "ios",
+        "xcode",
+        "android studio",
+        "mobile development"
+      ]
     },
     "cs_fundamentals": {
       "weight": 0.9,
@@ -825,11 +835,27 @@
     },
     "analytics_bi": {
       "weight": 0.9,
-      "skills": ["power bi", "tableau", "looker", "analytics", "data visualization", "google analytics", "power platform"]
+      "skills": [
+        "power bi",
+        "tableau",
+        "looker",
+        "analytics",
+        "data visualization",
+        "google analytics",
+        "power platform"
+      ]
     },
     "emerging": {
       "weight": 0.9,
-      "skills": ["blockchain", "unity", "game development", "augmented reality", "virtual reality", "iot", "edge computing"]
+      "skills": [
+        "blockchain",
+        "unity",
+        "game development",
+        "augmented reality",
+        "virtual reality",
+        "iot",
+        "edge computing"
+      ]
     }
   }
 }

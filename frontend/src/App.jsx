@@ -3,7 +3,6 @@ import Navbar from './components/Navbar'
 import HomePage from './pages/HomePage'
 import AnalyzePage from './pages/AnalyzePage'
 import ResultsPage from './pages/ResultsPage'
-import OptimizedPage from './pages/OptimizedPage'
 
 export default function App() {
   return (
@@ -14,7 +13,6 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/analyze" element={<AnalyzePage />} />
           <Route path="/results/:resumeId" element={<ResultsPage />} />
-          <Route path="/optimized/:resumeId" element={<OptimizedPage />} />
         </Routes>
       </main>
       <footer className="border-t border-ink-100 bg-white py-8 mt-20">

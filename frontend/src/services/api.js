@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
-  timeout: 60000,
+  timeout: 120000,
 });
 
 api.interceptors.request.use((config) => {
@@ -29,7 +29,8 @@ export const uploadResume = (file, sessionId, onProgress) => {
 
 export const analyzeResume = (resumeId) => api.post("/resume/analyze", { resumeId });
 
-export const optimizeResume = (resumeId) => api.post("/resume/optimize", { resumeId });
+export const matchJD = (resumeId, jobDescription, jobTitle) =>
+  api.post("/resume/match-jd", { resumeId, jobDescription, jobTitle });
 
 export const getResumeStatus = (resumeId) => api.get(`/resume/status/${resumeId}`);
 

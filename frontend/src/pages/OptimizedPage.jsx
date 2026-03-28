@@ -47,27 +47,52 @@ export default function OptimizedPage() {
     </div>
   )
 
-  const { atsScore, scoreBreakdown, fullAnalysis, optimizedResumeJson: resume } = data
+  const {
+    atsScore,
+    optimizedAtsScore,
+    fullAnalysis,
+    optimizedResumeJson: resume,
+  } = data
+
+  // Show new score if available, fall back to original
+  const displayScore   = optimizedAtsScore || atsScore
+  const scoreImproved  = optimizedAtsScore && optimizedAtsScore > atsScore
+  const scoreDiff      = optimizedAtsScore ? optimizedAtsScore - atsScore : 0
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       {/* Hero header */}
       <div className="card p-8 bg-ink-900 border-ink-900 mb-8 animate-fade-up">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <ScoreRing score={atsScore} size={140} animated={false} />
-          <div className="text-center sm:text-left">
+          <div className="relative">
+            <ScoreRing score={displayScore} size={140} animated={false} />
+            {/* Score improvement badge */}
+            {scoreImproved && (
+              <div className="absolute -top-1 -right-1 bg-sage-500 text-white text-xs font-mono font-500 px-2 py-0.5 rounded-full">
+                +{scoreDiff}
+              </div>
+            )}
+          </div>
+          <div className="text-center sm:text-left flex-1">
             <div className="section-tag text-ink-400 mb-3">OPTIMIZATION COMPLETE</div>
             <h1 className="font-display text-4xl text-white mb-2">Your Resume is Ready</h1>
-            <p className="text-ink-400 mb-5">
+            <p className="text-ink-400 mb-2 text-sm leading-relaxed">
               {fullAnalysis?.overallFeedback || 'AI has optimized your resume for maximum ATS compatibility.'}
             </p>
+            {scoreImproved && (
+              <p className="text-sage-400 text-xs mb-4 font-mono">
+                Score improved: {atsScore} → {optimizedAtsScore} (+{scoreDiff} pts)
+              </p>
+            )}
             <a
-              href={`/api/resume/download/${resumeId}`}
+              href={`http://localhost:5000/api/resume/download/${resumeId}`}
               className="btn-sage inline-flex items-center gap-2"
-              download
+              download="optimized-resume.pdf"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
               Download Optimized Resume PDF
             </a>
@@ -84,20 +109,20 @@ export default function OptimizedPage() {
               <div className="space-y-2">
                 {fullAnalysis.topStrengths.map((s, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-ink-700">
-                    <span className="text-sage-500 mt-0.5">✓</span> {s}
+                    <span className="text-sage-500 mt-0.5 flex-shrink-0">✓</span> {s}
                   </div>
                 ))}
               </div>
             </Section>
           )}
 
-          {/* Critical Issues */}
+          {/* Issues Fixed */}
           {fullAnalysis?.criticalIssues?.length > 0 && (
             <Section title="Issues Fixed" accent="amber">
               <div className="space-y-2">
                 {fullAnalysis.criticalIssues.map((s, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-ink-700">
-                    <span className="text-amber-500 mt-0.5">→</span> {s}
+                    <span className="text-amber-500 mt-0.5 flex-shrink-0">→</span> {s}
                   </div>
                 ))}
               </div>
@@ -117,7 +142,7 @@ export default function OptimizedPage() {
             </Section>
           )}
 
-          {/* Skills Added */}
+          {/* Skills Highlighted */}
           {fullAnalysis?.skillsToAdd?.length > 0 && (
             <Section title="Skills Highlighted" accent="ink">
               <div className="flex flex-wrap gap-2">
@@ -131,7 +156,7 @@ export default function OptimizedPage() {
           )}
         </div>
 
-        {/* Right column - Optimized content */}
+        {/* Right column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Bullet Improvements */}
           {fullAnalysis?.bulletImprovements?.length > 0 && (
@@ -153,7 +178,7 @@ export default function OptimizedPage() {
             </Section>
           )}
 
-          {/* Experience Preview */}
+          {/* Optimized Experience */}
           {resume?.experience?.length > 0 && (
             <Section title="Optimized Experience" accent="ink">
               <div className="space-y-5">
@@ -162,7 +187,9 @@ export default function OptimizedPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <div className="font-500 text-ink-900">{exp.role}</div>
-                        <div className="text-sm text-ink-500">{exp.company}{exp.location ? ` — ${exp.location}` : ''}</div>
+                        <div className="text-sm text-ink-500">
+                          {exp.company}{exp.location ? ` — ${exp.location}` : ''}
+                        </div>
                       </div>
                       <div className="text-xs font-mono text-ink-400">{exp.duration}</div>
                     </div>
@@ -179,7 +206,7 @@ export default function OptimizedPage() {
             </Section>
           )}
 
-          {/* Projects Preview */}
+          {/* Optimized Projects */}
           {resume?.projects?.length > 0 && (
             <Section title="Optimized Projects" accent="ink">
               <div className="space-y-4">
@@ -188,7 +215,9 @@ export default function OptimizedPage() {
                     <div className="font-500 text-ink-900 mb-1">{proj.title}</div>
                     {proj.tech?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {proj.tech.map(t => <span key={t} className="px-2 py-0.5 bg-ink-100 text-ink-600 text-xs font-mono rounded">{t}</span>)}
+                        {proj.tech.map(t => (
+                          <span key={t} className="px-2 py-0.5 bg-ink-100 text-ink-600 text-xs font-mono rounded">{t}</span>
+                        ))}
                       </div>
                     )}
                     {(proj.bullets || []).map((b, j) => (
@@ -202,7 +231,7 @@ export default function OptimizedPage() {
             </Section>
           )}
 
-          {/* Skills Preview */}
+          {/* Skills Overview */}
           {resume?.skills && (
             <Section title="Skills Overview" accent="ink">
               {resume.skills.technical?.length > 0 && (
@@ -232,14 +261,18 @@ export default function OptimizedPage() {
           <div className="card p-8 bg-sage-50 border-sage-100 text-center">
             <div className="text-4xl mb-3">📄</div>
             <h3 className="font-display text-2xl text-ink-900 mb-2">Your optimized resume is ready</h3>
-            <p className="text-ink-500 text-sm mb-5">Professional PDF with ATS-safe formatting. Ready to submit.</p>
+            <p className="text-ink-500 text-sm mb-5">
+              Professional single-page PDF with ATS-safe formatting. Ready to submit.
+            </p>
             <a
-              href={`/api/resume/download/${resumeId}`}
+              href={`http://localhost:5000/api/resume/download/${resumeId}`}
               className="btn-sage inline-flex items-center gap-2 text-base px-8 py-4"
-              download
+              download="optimized-resume.pdf"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
               Download Optimized Resume PDF
             </a>

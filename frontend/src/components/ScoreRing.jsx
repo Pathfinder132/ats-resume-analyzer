@@ -9,7 +9,7 @@ const getScoreColor = (score) => {
 
 export default function ScoreRing({ score, size = 180, animated = true }) {
   const circleRef = useRef(null)
-  const radius = 54
+  const radius = 46
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
   const { stroke, label, bg, text } = getScoreColor(score)
@@ -27,15 +27,20 @@ export default function ScoreRing({ score, size = 180, animated = true }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className={`relative rounded-full p-3 ${bg}`} style={{ width: size, height: size }}>
-        <svg width={size - 24} height={size - 24} viewBox="0 0 120 120" className="absolute top-3 left-3">
+      <div className={`relative rounded-full ${bg}`} style={{ width: size, height: size }}>
+        {/* SVG fills the full container — no padding offset, no clipping */}
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 120 120"
+          style={{ display: 'block' }}
+        >
           {/* Background track */}
           <circle
             cx="60" cy="60" r={radius}
             fill="none"
             stroke="#E8E8E5"
-            strokeWidth="8"
-            className="score-circle"
+            strokeWidth="7"
           />
           {/* Score arc */}
           <circle
@@ -43,20 +48,34 @@ export default function ScoreRing({ score, size = 180, animated = true }) {
             cx="60" cy="60" r={radius}
             fill="none"
             stroke={stroke}
-            strokeWidth="8"
+            strokeWidth="7"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={animated ? circumference : offset}
-            className="score-circle"
             style={!animated ? { strokeDashoffset: offset } : {}}
+            transform="rotate(-90 60 60)"
           />
-          {/* Score text */}
-          <text x="60" y="56" textAnchor="middle" dy=".35em" fontSize="28" fontWeight="bold"
-            fontFamily="DM Serif Display, Georgia, serif" fill="#0D0D0D">
+          {/* Score number */}
+          <text
+            x="60" y="55"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="26"
+            fontWeight="bold"
+            fontFamily="DM Serif Display, Georgia, serif"
+            fill="#0D0D0D"
+          >
             {score}
           </text>
-          <text x="60" y="74" textAnchor="middle" fontSize="10"
-            fontFamily="DM Sans, sans-serif" fill="#9B9A94" letterSpacing="0.5">
+          {/* /100 label */}
+          <text
+            x="60" y="73"
+            textAnchor="middle"
+            fontSize="9"
+            fontFamily="DM Sans, sans-serif"
+            fill="#9B9A94"
+            letterSpacing="0.5"
+          >
             / 100
           </text>
         </svg>
